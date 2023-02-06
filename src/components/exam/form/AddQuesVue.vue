@@ -130,8 +130,8 @@
           <!-- question wrapper  -->
         </div>
       </div>
-      <n-form-item>
-        <n-button color="#688065" round size="large" type="primary" style="margin-inline-start: auto"
+      <n-form-item style="direction:ltr" class=" tw-flex tw-items-center tw-justify-start" v-if="!submit">
+        <n-button color="#688065" round type="primary" style="margin-inline-start: auto"
           @click.prevent="handleValidate" :loading="saveSentenceLoading" :disabled="saveSentenceLoading">
           حفظ
         </n-button>
@@ -205,7 +205,8 @@ const {
   handleSent_ques,
   questionChangingLoading,
   handleValidate,
-  saveSentenceLoading
+  saveSentenceLoading,
+  submit
 } = ADD_QUEST_FORM()
 
 const draggableQuestProps = computed(() => {

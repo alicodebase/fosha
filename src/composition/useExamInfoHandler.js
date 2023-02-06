@@ -6,8 +6,8 @@ import { useMessage } from 'naive-ui'
 
 //-- reactive values
 
-const activePanel = ref(['4'])
-const allowedPanels = ref(['4'])
+const activePanel = ref(['1'])
+const allowedPanels = ref(['1'])
 
 // -- 
 
@@ -20,6 +20,7 @@ const payload = reactive({
     category: null,
     startDate: Date.now(),
     endDate: null,
+    isLive: true
   },
   pedigree: {
 
@@ -143,6 +144,10 @@ export default function () {
       {
         label: 'واجب',
         value: 'homework',
+      },
+      {
+        label: 'ذهبي',
+        value: 'golden',
       },
     ])
     const mainInfoForm = ref(null)
@@ -491,6 +496,7 @@ export default function () {
     //-- callbacks
     const handleSentence = (index, type) => {
       const sentence = { id: uuidv4(), req_id: null, category: null, body: '', questions: [{ drag_id: uuidv4(), body: null, degreee: null, pivot: { sentence_id: null, question_id: null, question_mark: null }, answers: [{ drag_id: uuidv4(), body: null, is_correct: true, }] }] }
+      submit.value = false
       if (type === 'add') {
         formValue.sentences.push(sentence)
       } else {
@@ -577,7 +583,7 @@ export default function () {
 
       const { sentence_i, question_i, answer_i } = args
 
-
+      submit.value = false
       /** 
       * @args
       * sentence_i
@@ -590,28 +596,20 @@ export default function () {
       * answer_add
       * answer_remove
       */
-      switch (type) {
-        case 'question_add':
-          formValue.sentences[sentence_i].questions.push(question)
-          break;
-        case 'question_remove':
-          formValue.sentences[sentence_i].questions.splice(question_i, 1)
-          break;
-        case 'answer_add':
-          formValue.sentences[sentence_i].questions[question_i].answers.push(answer)
-          break;
-        case 'answer_remove':
+      if (!['question_add', 'question_remove', 'answer_add', 'answer_remove'].includes(type)) return
+      const callbacks = {
+        question_add: () => formValue.sentences[sentence_i].questions.push(question),
+        question_remove: () => formValue.sentences[sentence_i].questions.splice(question_i, 1),
+        answer_add: () => formValue.sentences[sentence_i].questions[question_i].answers.push(answer),
+        answer_remove: () => {
           formValue.sentences[sentence_i].questions[question_i].answers.splice(answer_i, 1)
           //-- handling correct answer
           if (formValue.sentences[sentence_i].questions[question_i].answers === 1) {
             formValue.sentences[sentence_i].questions[question_i].answers[0].is_correct = true
           }
-          break;
-        default:
-          console.log('invalid type')
-          break;
+        }
       }
-
+      callbacks[type]()
     }
 
     const getValidationIndexForQues = (dragId, sentence_i) => {
@@ -922,11 +920,10 @@ export default function () {
       handleSent_ques,
       handleSelectedDropdownQues,
       questionChangingLoading,
-
-
       handleDialog,
       modalLoading,
-      saveSentenceLoading
+      saveSentenceLoading,
+      submit
     }
   }
 
@@ -935,19 +932,50 @@ export default function () {
 
   const HandleSubmit = () => {
     if (!submit.value) return
+    const { stage, addQuest, pedigree, mainInfo } = payload
 
-    /*
-    // fire request here 
-    
-    axios.post('url', payload)
-      .then(() => {
-        // do something
+    let questArr = []
+    addQuest.sentences.forEach((item) => {
+      return item.questions.forEach((x, i) => {
+        questArr.push({
+          "question_id": x.id,
+          "question_mark": x.degreee,
+          "order": i + 1
+        })
       })
-      .catch((errors) => {
-        alert(errors)
-      })
-    */
-    console.log('request triggered')
+    })
+
+    const examPayload = {
+      "title": mainInfo.examName,
+      "is_live": mainInfo.isLive ? 1 : 0,
+      "type": mainInfo.category,
+      "start_date": mainInfo.startDate,
+      "end_date": mainInfo.endDate,
+      "exam_type": null,
+      "stage_id": stage.stageName,
+      "material_id": stage.branches,
+      "sentences": addQuest.sentences.map((x) => {
+        return x.req_id ? x.req_id : x.category
+      }),
+      "questions": questArr,
+      "grade_d": {
+        "from": pedigree.grade_d.from,
+        "to": pedigree.grade_d.to
+      },
+      "grade_c": {
+        "from": pedigree.grade_c.from,
+        "to": pedigree.grade_c.to
+      },
+      "grade_b": {
+        "from": pedigree.grade_b.from,
+        "to": pedigree.grade_b.to
+      },
+      "grade_a": {
+        "from": pedigree.grade_a.from,
+        "to": pedigree.grade_a.to
+      }
+    }
+    console.log('request triggered', examPayload)
   }
 
 

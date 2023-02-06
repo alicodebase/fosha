@@ -1,6 +1,6 @@
 // import axios from 'axios'
 import { ref, reactive } from 'vue'
-import { getMaterial, getStages, getQuestions, getSentences, saveQuestion } from '../services/apies'
+import { getMaterial, getStages, getQuestions, getSentences, saveQuestion, putQuestion, saveSentence, putSentence } from '../services/apies'
 import { v4 as uuidv4 } from 'uuid';
 import { useMessage } from 'naive-ui'
 
@@ -48,6 +48,7 @@ const payload = reactive({
     sentences: [
       {
         id: uuidv4(),
+        req_id: null,
         category: null,
         body: '',
         questions: [
@@ -97,7 +98,7 @@ const stageOption = reactive({
 // -- 
 const serverSentences = ref([])
 
-const submit = ref(true)
+const submit = ref(false)
 export default function () {
   const message = useMessage()
 
@@ -450,6 +451,8 @@ export default function () {
 
   const ADD_QUEST_FORM = () => {
     const questionChangingLoading = ref(false)
+    const modalLoading = ref(false)
+    const saveSentenceLoading = ref(false)
     //-- state
     const questionsList = reactive({
       loading: true,
@@ -487,7 +490,7 @@ export default function () {
     }
     //-- callbacks
     const handleSentence = (index, type) => {
-      const sentence = { id: uuidv4(), category: null, body: '', questions: [{ drag_id: uuidv4(), body: null, degreee: null, pivot: { sentence_id: null, question_id: null, question_mark: null }, answers: [{ drag_id: uuidv4(), body: null, is_correct: true, }] }] }
+      const sentence = { id: uuidv4(), req_id: null, category: null, body: '', questions: [{ drag_id: uuidv4(), body: null, degreee: null, pivot: { sentence_id: null, question_id: null, question_mark: null }, answers: [{ drag_id: uuidv4(), body: null, is_correct: true, }] }] }
       if (type === 'add') {
         formValue.sentences.push(sentence)
       } else {
@@ -573,6 +576,8 @@ export default function () {
       const question = { modal: false, drag_id: uuidv4(), body: null, degreee: null, id: null, stage_id: null, pivot: { sentence_id: null, question_id: null, question_mark: null }, answers: [{ drag_id: uuidv4(), body: null, is_correct: true, }] }
 
       const { sentence_i, question_i, answer_i } = args
+
+
       /** 
       * @args
       * sentence_i
@@ -644,14 +649,27 @@ export default function () {
     }
 
 
-    const handleValidateSentence = () => {
-      addSentence_form.value?.validate((errors) => {
-        if (!errors) {
-          submit.value = true
-        } else {
-          console.log(errors)
+    const handleValidate = () => {
+      let invalid = false
+
+      payload.addQuest.sentences.forEach((item) => {
+        if (item.body === null || item.body.split('').length <= 2) {
+          invalid = true
+          return
         }
+        item.questions.forEach((question) => {
+          if (question.body === null || question.degreee === null || question.body.split('').length <= 1) {
+            invalid = true
+            return
+          }
+        })
       })
+      if (invalid) {
+        notify('error', 'please fill all required fields')
+        return
+      } else {
+        handleSubmitSentence()
+      }
     }
 
     const handleFetching = () => {
@@ -703,219 +721,61 @@ export default function () {
       }
     }
 
-
-
-
-    const handleStoreData = async () => {
-      const findQuestionToCreate = () => {
-        const { sentences } = payload.addQuest
-        let quesArray = []
-        sentences.forEach((sentence) => {
-          sentence.questions.forEach((ques) => {
-            if (ques.pivot.question_id === null && ques.pivot.sentence_id === null && ques.pivot.question_mark === null) {
-              quesArray.push({ id: sentence.id, ques })
-            }
-          })
-        })
-        // console.log('question to create', quesArray)
-        return quesArray
-      }
-      const findSentenceToCreate = () => {
-        const { sentences } = payload.addQuest
-        let sentenceArray = []
-        sentences.forEach((sentence) => {
-          if (sentence.category === null) {
-            sentenceArray.push(sentence)
-          }
-        })
-        // console.log('sentence to create', sentenceArray)
-        return sentences
-      }
-      const findSentenceToPut = () => {
-        let sentencesArray = []
-        if (serverSentences.value.length === 0) {
-          console.log('server sentences not found')
-          return
+    const handleSubmitSentence = async () => {
+      let sentenceArrayToCreate = []
+      let sentenceArrayToPut = []
+      submit.value = false
+      const { sentences } = payload.addQuest
+      sentences.forEach((sentence, index) => {
+        if (sentence.category === null && sentence.req_id === null) {
+          sentenceArrayToCreate.push({ sentence, index })
+        } else {
+          sentenceArrayToPut.push(sentence)
         }
-        const newSentence = payload.addQuest.sentences
-        const oldSentences = serverSentences.value.filter((x) => {
-          return payload.addQuest.sentences.find((y) => {
-            if (typeof x.value !== 'undefined' && typeof y.category !== 'undefined') {
-              return y.category == x.value
-            }
-          })
-        })
-        if (oldSentences && oldSentences.length != 0 && newSentence.length != 0) {
-          oldSentences.forEach((oldItem) => {
-            const itemTocheck = newSentence.find((x) => x.category == oldItem.value)
-            if (itemTocheck) {
+      })
 
-              if (!itemTocheck.body.includes(oldItem.label)) {
-                sentencesArray.push(itemTocheck)
-              }
-            }
-          })
-        }
-
-        // console.log('*********filterd used sentences to put******', sentencesArray)
-        return sentencesArray
-      }
-      // const question = findQuestionToCreate()
-      // const questionList = {
-      //   //  create question then create sentence 
-      //   create: [],
-      //   // if question has id  create sentece else
-      //   edit: []
-      // }
-      // if (question.length !== 0) {
-      //   question.forEach(item => {
-      //     if (item.ques.id === null) {
-      //       questionList.create.push(item)
-      //     } else {
-      //       questionList.edit.push(item)
-      //     }
-      //   })
-      // }
-      // // question first then sentence
-      // if (questionList.create.length) {
-      //   questionList.create.forEach((item) => {
-      //     //-- create request
-      //     const Quespayload = {
-      //       question: item.ques.body,
-      //       stage_id: payload.stage.stageName,
-      //       lesson_name: null,
-      //       material_id: payload.stage.branches,
-      //       choices: item.ques.answers.map((x, i) => {
-      //         return {
-      //           name: x.body,
-      //           correct: x.is_correct,
-      //           order: i + 1
-      //         }
-      //       })
-      //     }
-      //     console.warn(Quespayload, 'Create question request triggred')
-      //   })
-      // }
-      // if (questionList.edit.length) {
-      //   questionList.edit.forEach((item) => {
-      //     //-- edit request
-      //     const Quespayload = {
-      //       question: item.ques.body,
-      //       stage_id: payload.stage.stageName,
-      //       lesson_name: null,
-      //       material_id: payload.stage.branches,
-      //       choices: item.ques.answers.map((x, i) => {
-      //         return {
-      //           name: x.body,
-      //           correct: x.is_correct,
-      //           order: i + 1
-      //         }
-      //       })
-      //     }
-      //     console.warn(Quespayload, 'Edit question request triggred')
-      //   })
-
-      // }
-      const updateQuestion = async () => {
-        const updatedQuestionList = []
-        return new Promise((resolve, reject) => {
-          findQuestionToCreate().forEach(async (item, i) => {
-            if (item.ques.body === null || item.ques.degreee === null) {
-              return reject({ data: 'please fill all required fields' })
-            }
-            item.ques.answers.forEach((ans) => {
-              console.log(ans.body)
-              if (ans.body === null) {
-                return reject({ data: 'please fill all required fields' })
-              }
-            })
-            const Quespayload = {
-              question: item.ques.body,
-              stage_id: payload.stage.stageName,
-              lesson_name: null,
-              material_id: payload.stage.branches,
-              choices: item.ques.answers.map((x, i) => {
-                return {
-                  name: x.body,
-                  correct: x.is_correct,
-                  order: i + 1
-                }
-              })
-            }
-            //-- fire request
-            try {
-              const { data } = await saveQuestion(Quespayload)
-              updatedQuestionList.push(
-                {
-                  sentence_i: item.id,
-                  question_id: data.id,
-                  question_mark: data.question_mark
-                }
-              )
-              if (i === findQuestionToCreate().length - 1) {
-                return resolve({ data: updatedQuestionList })
-              }
-            } catch (error) {
-              return error
-            }
-          })
-        })
-      }
-
-
-      if (findQuestionToCreate().length !== 0) {
-        try {
-          const data = await updateQuestion()
-          console.log(data)
-        } catch (error) {
-          notify('error', error.data)
-        }
-      }
-
-
-      console.log(findSentenceToPut())
-      console.log(findSentenceToCreate())
-      const updateSentence = () => {
-        findSentenceToCreate().forEach((item) => {
-          const sentencePayload = {
-            "sentence": item.body,
-            "stage_id": payload.stage.stageName,
-            "material_id": payload.stage.branches,
-            "lesson_name": null,
-            "questions": item.questions.map((ques, i) => {
-              console.log(ques)
+      //-- triggger request
+      if (sentenceArrayToCreate.length > 0) {
+        saveSentenceLoading.value = true
+        sentenceArrayToCreate.forEach(async (item, $index) => {
+          const req_payload = {
+            sentence: item.sentence.body,
+            stage_id: payload.stage.stageName,
+            material_id: payload.stage.branches,
+            lesson_name: null,
+            questions: item.sentence.questions.map((q, i) => {
               return {
-                question_id: 2019,
-                question_mark: 10,
+                question_id: q.id,
+                question_mark: q.degreee,
                 order: i + 1
               }
             })
           }
-          console.log(sentencePayload)
+          await handleCreateSentence(req_payload, sentenceArrayToCreate[$index].index)
+        })
+      }
+      if (sentenceArrayToPut.length > 0) {
+        saveSentenceLoading.value = true
+        sentenceArrayToPut.forEach(async (item) => {
+          const req_payload = {
+            sentence: item.body,
+            stage_id: payload.stage.stageName,
+            material_id: payload.stage.branches,
+            lesson_name: null,
+            questions: item.questions.map((q, i) => {
+              return {
+                question_id: q.id,
+                question_mark: q.degreee,
+                order: i + 1
+              }
+            })
+          }
+          await handlePutSentence(req_payload)
         })
       }
 
 
-      if (findSentenceToCreate().length !== 0) {
-        updateSentence()
-      }
 
-
-
-
-
-
-
-
-
-      // if sentece body is used fire put reqest for sentence else if added new question create sentence 
-
-
-      return {
-        findQuestionToCreate,
-        findSentenceToCreate,
-        findSentenceToPut,
-      }
     }
 
 
@@ -949,12 +809,17 @@ export default function () {
         handleCreateQuestion(question, sentence_i, question_i)
         return
       } else {
-        handlePutQuestion(question, sentence_i, question_i)
+        handlePutQuestion(question, question_i)
         return
       }
 
     }
+
+
+    //--- handle creating and edit sentence and questions 
+
     const handleCreateQuestion = async (question, sentence_i, question_i) => {
+      modalLoading.value = true
       const { value: q_data } = question
       const req_payload = {
         question: q_data.body,
@@ -973,17 +838,17 @@ export default function () {
         const { data } = await saveQuestion(req_payload)
         if (!data) return
         payload.addQuest.sentences[sentence_i].questions[question_i].id = data.id
+        modalLoading.value = false
         question.value.modal = false
-        console.log(sentence_i, question_i, data)
       } catch (error) {
+        modalLoading.value = false
         notify('error', error)
-
       }
-
       console.log('create request here !', req_payload)
 
     }
-    const handlePutQuestion = (question) => {
+    const handlePutQuestion = async (question, question_i) => {
+      modalLoading.value = true
       const { value: q_data } = question
       const req_payload = {
         question: q_data.body,
@@ -998,14 +863,52 @@ export default function () {
           }
         })
       }
+      try {
+        const data = await putQuestion(req_payload, question_i)
+        modalLoading.value = false
+        if (!data) return
+        question.value.modal = false
+      } catch (error) {
+        modalLoading.value = false
+        notify('error', error)
+
+      }
       console.log('create put here !', req_payload, q_data.id)
     }
+    const handleCreateSentence = async (sentence, sentence_i) => {
+      try {
+        const { data } = await saveSentence(sentence)
+        saveSentenceLoading.value = false
+        submit.value = true
+        if (!data) return
+        console.log(data.id)
+        payload.addQuest.sentences[sentence_i].req_id = data.id
+        return data
+      } catch (error) {
+        saveSentenceLoading.value = false
+        notify('error', error)
+      }
+    }
+    const handlePutSentence = async (sentence) => {
+      try {
+        const { data } = await putSentence(sentence)
+        saveSentenceLoading.value = false
+        submit.value = true
+        if (!data) return
+        notify('success', data.message)
+        return data
+      } catch (error) {
+        saveSentenceLoading.value = false
+        notify('error', error)
+      }
+    }
+    //-------------
 
     return {
       addSentence_form,
       formValue,
       handleSentence,
-      handleValidateSentence,
+      handleValidate,
       handleQuestion,
       answer_dragging,
       ques_dragging,
@@ -1019,10 +922,11 @@ export default function () {
       handleSent_ques,
       handleSelectedDropdownQues,
       questionChangingLoading,
-      handleStoreData,
 
 
-      handleDialog
+      handleDialog,
+      modalLoading,
+      saveSentenceLoading
     }
   }
 
@@ -1031,11 +935,6 @@ export default function () {
 
   const HandleSubmit = () => {
     if (!submit.value) return
-    const { handleStoreData } = ADD_QUEST_FORM()
-    handleStoreData()
-    // handleStoreData().findQuestionToCreate()
-    // handleStoreData().findSentenceToCreate()
-    // handleStoreData().findSentenceToPut()
 
     /*
     // fire request here 

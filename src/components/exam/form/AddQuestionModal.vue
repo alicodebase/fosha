@@ -2,10 +2,11 @@
   <n-card class="tw-max-w-[1000px] tw-my-2 !tw-bg-white" max-width="300px">
     <template #footer>
       <div class="tw-flex tw-gap-2 tw-justify-end">
-        <n-button @click="closeDialog" round size="large" type="error">
-          Close
+        <n-button @click="closeDialog" type="error" :disabled="modalLoading">
+          إلغاء
         </n-button>
-        <n-button color="#688065" round size="large" type="primary" @click.prevent="saveDialog">
+        <n-button color="#688065" type="primary" @click.prevent="saveDialog" :loading="modalLoading"
+          :disabled="modalLoading">
           حفظ
         </n-button>
       </div>
@@ -22,7 +23,7 @@
               $event,
             )
           ">
-            <n-button strong circle :loading="questionsList.loading" :disabled="questionsList.loading">
+            <n-button strong circle :loading="questionsList.loading" :disabled="questionsList.loading || modalLoading">
               <template #icon>
                 <n-icon>
                   <ChevronDown />
@@ -41,7 +42,7 @@
     message: 'برجاء ادخال عنوان صالح',
     trigger: ['input', 'blur'],
   }" class="tw-flex-auto">
-            <n-input v-model:value="question.body" type="text" clearable />
+            <n-input v-model:value="question.body" type="text" clearable :disabled="modalLoading" />
           </n-form-item>
         </div>
         <n-form-item label="الدرجة" :path="`sentences[${sentence_i}].questions[${getValidationIndexForQues(
@@ -53,7 +54,7 @@
   message: 'برجاء ادخال درجة صالحة',
   trigger: ['input', 'blur'],
 }">
-          <n-input-number v-model:value="question.degreee" type="number" :min="0" clearable />
+          <n-input-number v-model:value="question.degreee" type="number" :min="0" clearable :disabled="modalLoading" />
         </n-form-item>
       </div>
       <!-- //-- add answer toolbar  -->
@@ -82,18 +83,8 @@
         @end="answer_dragging = false">
         <template #item="{ element: answer, index: answer_i }">
           <li class="tw-shadow-lg tw-p-2 tw-rounded-md tw-m-2">
-            <div v-if="
-              formValue.sentences[sentence_i].questions[question_i].answers
-                .length > 1
-            "
-              class="tw-flex tw-justify-between tw-items-center tw-p-2 tw-py-2 tw-flex-wrap tw-my-1 tw-shadow-sm tw-rounded-md">
-              <span class="tw-font-bold"> تعديل الترتيب الاختيار</span>
-              <n-button ghost round class="handle">
-                <n-icon :component="MoveOutline" />
-              </n-button>
-            </div>
 
-            <InputWrapper :label="`الاختيار رقم ${answer_i + 1}`">
+            <InputWrapper label="">
               <div class="tw-flex tw-flex-wrap tw-gap-3">
                 <n-form-item label="عنوان الاختيار" :path="`sentences[${sentence_i}].questions[${getValidationIndexForQues(
                   question.drag_id,
@@ -107,8 +98,9 @@
   required: true,
   message: 'برجاء ادخال عنوان صالح',
   trigger: ['input', 'blur'],
+
 }" class="tw-flex-auto">
-                  <n-input v-model:value="answer.body" type="text" clearable />
+                  <n-input v-model:value="answer.body" type="text" clearable :disabled="modalLoading" />
                 </n-form-item>
                 <n-form-item label="الايجابة الصحيحة" :path="`sentences[${sentence_i}].questions[${getValidationIndexForQues(
                   question.drag_id,
@@ -127,24 +119,27 @@
                       },
                       $event,
                     )
-                  " />
+                  " :disabled="modalLoading" />
                 </n-form-item>
-                <n-form-item>
-                  <n-button v-if="
-                    formValue.sentences[sentence_i].questions[question_i]
-                      .answers.length > 1
-                  " circle class="tw-mx-3" @click="
-  () =>
-    handleQuestion(
-      {
-        question_i,
-        sentence_i,
-        answer_i,
-      },
-      'answer_remove',
-    )
-">
+                <n-form-item v-if="
+                  formValue.sentences[sentence_i].questions[question_i]
+                    .answers.length > 1
+                ">
+                  <n-button type="error" circle class="tw-mx-3" @click="
+                    () =>
+                      handleQuestion(
+                        {
+                          question_i,
+                          sentence_i,
+                          answer_i,
+                        },
+                        'answer_remove',
+                      )
+                  ">
                     <n-icon :component="TrashOutline" size="large" />
+                  </n-button>
+                  <n-button circle class="handle">
+                    <n-icon :component="MoveOutline" size="large" />
                   </n-button>
                 </n-form-item>
               </div>
@@ -176,13 +171,32 @@ const {
   handleQuestion,
   handleFetching,
   //--- handle
-  handleDialog
+  handleDialog,
+  modalLoading
 } = ADD_QUEST_FORM()
+
 const question = computed(() => {
   return formValue.sentences[props.sentence_i].questions[props.question_i]
 })
+const storedQuestion = {
+  drag_id: question.value.drag_id,
+  body: question.value.body,
+  degreee: question.value.degreee,
+  id: question.value.id,
+  stage_id: question.value.stage_id,
+  pivot: { sentence_id: question.value.pivot.sentence_id, question_id: question.value.pivot.question_id, question_mark: question.value.pivot.question_mark },
+  answers: question.value.answers
+}
 const closeDialog = () => {
+  const { drag_id, body, degreee, id, stage_id, pivot, answers } = storedQuestion
   question.value.modal = false
+  question.value.drag_id = drag_id
+  question.value.body = body
+  question.value.degreee = degreee
+  question.value.id = id
+  question.value.stage_id = stage_id
+  question.value.pivot = pivot
+  question.value.answers = answers
 }
 const saveDialog = () => {
   handleDialog(question, props.sentence_i, props.question_i)

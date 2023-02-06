@@ -2310,8 +2310,30 @@ const saveQuestion = async (payload) => {
   const data = await fakeReq(response)
   return data
 }
-const saveSentence = async (payload) => {
+const putQuestion = async (payload, index) => {
   console.log(payload)
+  const response = {
+    status: true,
+    message: `question edited succesfully ${index}`,
+  }
+  const data = await fakeReq(response)
+  return data
+
+}
+const saveSentence = async (payload) => {
+  console.log('create sentences', payload)
+  const response = {
+    status: true,
+    message: "sentence saved succesfully",
+    data: {
+      id: 2,
+    }
+  }
+  const data = await fakeReq(response)
+  return data
+}
+const putSentence = async (payload) => {
+  console.group(' edit sentences', payload)
   const response = {
     status: true,
     message: "sentence saved succesfully"
@@ -2335,5 +2357,7 @@ export {
   getSentences,
   //-- save apies
   saveQuestion,
-  saveSentence
+  saveSentence,
+  putQuestion,
+  putSentence
 }

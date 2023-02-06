@@ -10,8 +10,11 @@ const activePanel = ref(['1'])
 const allowedPanels = ref(['1'])
 
 // -- 
-
-
+/**
+ * زرار التأكيد
+ * default -- piedegree 
+ * 
+ */
 // -- client payload
 
 const payload = reactive({
@@ -25,20 +28,20 @@ const payload = reactive({
   pedigree: {
 
     grade_d: {
-      from: null,
-      to: null
+      from: 50,
+      to: 60
     },
     grade_c: {
-      from: null,
-      to: null
+      from: 61,
+      to: 70
     },
     grade_b: {
-      from: null,
-      to: null
+      from: 71,
+      to: 80
     },
     grade_a: {
-      from: null,
-      to: null
+      from: 81,
+      to: 100
     }
   },
   stage: {
@@ -134,8 +137,12 @@ export default function () {
   const MAIN_INFO_FORM = () => {
     const catOpts = ref([
       {
-        label: 'اختبار',
+        label: 'اختبار كلي',
         value: 'quiz',
+      },
+      {
+        label: 'اختبار جزئي',
+        value: 'quiz-p',
       },
       {
         label: 'مسابقة',
@@ -933,31 +940,51 @@ export default function () {
   const HandleSubmit = () => {
     if (!submit.value) return
     const { stage, addQuest, pedigree, mainInfo } = payload
-
-    let questArr = []
-    addQuest.sentences.forEach((item) => {
-      return item.questions.forEach((x, i) => {
-        questArr.push({
-          "question_id": x.id,
-          "question_mark": x.degreee,
-          "order": i + 1
+    const questionArray = () => {
+      let questArr = []
+      addQuest.sentences.forEach((item) => {
+        return item.questions.forEach((x, i) => {
+          questArr.push({
+            "question_id": x.id,
+            "question_mark": x.degreee,
+            "order": i + 1
+          })
         })
       })
-    })
+      return questArr
+    }
+
+    const type = () => {
+      if (mainInfo.category == 'quiz' || mainInfo.category == 'quiz-p') {
+        return 'quiz'
+      }
+      return mainInfo.category
+    }
+    const exam_type = () => {
+      if (mainInfo.category == 'quiz') {
+        return 'global'
+      }
+      if (mainInfo.category == 'quiz-p') {
+        return 'partial'
+      }
+      return null
+
+    }
+
 
     const examPayload = {
       "title": mainInfo.examName,
       "is_live": mainInfo.isLive ? 1 : 0,
-      "type": mainInfo.category,
+      "type": type(),
       "start_date": mainInfo.startDate,
       "end_date": mainInfo.endDate,
-      "exam_type": null,
+      "exam_type": exam_type(),
       "stage_id": stage.stageName,
       "material_id": stage.branches,
       "sentences": addQuest.sentences.map((x) => {
         return x.req_id ? x.req_id : x.category
       }),
-      "questions": questArr,
+      "questions": questionArray(),
       "grade_d": {
         "from": pedigree.grade_d.from,
         "to": pedigree.grade_d.to

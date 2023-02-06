@@ -78,16 +78,17 @@ const { activePanel, pannelIsDisabled, handelPanelUpdate } =
     border-radius: 0px 0px 10px 10px;
   }
   .n-collapse-item__header {
-    padding: 1rem !important;
+    padding: 0rem !important;
     border-radius: 10px;
     background: #b6b19d26;
     color: #1d3134;
     --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --tw-shadow-colored: 0 1px 2px 0 var(--tw-shadow-color);
     box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000),
-      var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-
+    var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+    
     .n-collapse-item__header-main {
+      padding: 1rem !important;
       justify-content: space-between;
       font-weight: bold !important;
       font-size: 18px;

@@ -25,7 +25,7 @@
           <n-grid-item>
             <InputWrapper :label="'تاريخ البدأ'" :is-required="true">
               <n-form-item path="startDate" :show-label="false">
-                <n-date-picker v-model:value="formValue.startDate" :is-date-disabled="dateDisabled" type="datetime"
+                <n-date-picker :actions="['clear', 'now']" :update-value-on-close="true" v-model:value="formValue.startDate" :is-date-disabled="dateDisabled" type="datetime"
                   :format="'yyyy/MM/dd - HH:mm'" size="large" class="tw-w-full" />
               </n-form-item>
             </InputWrapper>
@@ -33,7 +33,7 @@
           <n-grid-item>
             <InputWrapper :label="'تاريخ الانتهاء'" :is-required="true">
               <n-form-item path="endDate" :show-label="false">
-                <n-date-picker v-model:value="formValue.endDate" :is-date-disabled="dateDisabled" type="datetime"
+                <n-date-picker :actions="['clear', 'now']" :update-value-on-close="true" v-model:value="formValue.endDate" :is-date-disabled="dateDisabled" type="datetime"
                   :format="'yyyy/MM/dd - HH:mm'" :time-picker-props:seconds="[0]" clearable size="large"
                   class="tw-w-full" />
               </n-form-item>

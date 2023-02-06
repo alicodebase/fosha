@@ -8,7 +8,7 @@
       <!-- senteneces -->
       <div class="tw-flex tw-justify-between tw-items-center tw-p-2 tw-flex-wrap">
         <span class="tw-font-bold">اضافة عبارة</span>
-        <n-button color="#688065" round size="large" type="primary" @click="() => handleSentence('_', 'add')">
+        <n-button color="#688065" circle type="primary" @click="() => handleSentence('_', 'add')">
           <n-icon :component="Add" size="large" />
         </n-button>
       </div>
@@ -21,7 +21,7 @@
             </n-avatar>
             <n-button v-if="formValue.sentences.length > 1" circle type="error" class="tw-mx-3"
               @click="() => handleSentence(sentence_i, 'remove')">
-              <n-icon :component="TrashOutline" size="large" />
+              <n-icon :component="TrashOutline" />
             </n-button>
           </div>
 
@@ -131,8 +131,8 @@
         </div>
       </div>
       <n-form-item style="direction:ltr" class=" tw-flex tw-items-center tw-justify-start" v-if="!submit">
-        <n-button color="#688065" round type="primary" style="margin-inline-start: auto"
-          @click.prevent="handleValidate" :loading="saveSentenceLoading" :disabled="saveSentenceLoading">
+        <n-button color="#688065" round type="primary" style="margin-inline-start: auto" @click.prevent="handleValidate"
+          :loading="saveSentenceLoading" :disabled="saveSentenceLoading">
           حفظ
         </n-button>
       </n-form-item>

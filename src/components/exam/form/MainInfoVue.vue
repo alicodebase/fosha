@@ -2,7 +2,11 @@
   <div style="direction: rtl">
     <div class="tw-container tw-my-2">
       <n-form ref="mainInfoForm" :model="formValue" :rules="rules">
-        
+        <InputWrapper label="ظهور الامتحان">
+          <n-form-item path="isLive" :show-label="false">
+            <n-switch :round="false" size="small" v-model:value="formValue.isLive" label="sss" />
+          </n-form-item>
+        </InputWrapper>
         <n-grid cols="1 400:2 600:4">
           <n-grid-item>
             <InputWrapper label="اسم الامتحان" :is-required="true">
@@ -35,12 +39,9 @@
               </n-form-item>
             </InputWrapper>
           </n-grid-item>
+
         </n-grid>
-        <InputWrapper label="ظهور الامتحان">
-          <n-form-item path="isLive" :show-label="false">
-            <n-switch :round="false" size="small" v-model:value="formValue.isLive" />
-          </n-form-item>
-        </InputWrapper>
+
         <n-form-item>
           <n-button color="#688065" round size="large" type="primary" style="margin-inline-start: auto"
             @click.prevent="handleValidateClick">
@@ -50,19 +51,12 @@
       </n-form>
     </div>
   </div>
-
-  <!-- <pre>
-    {{ JSON.stringify(formValue, null, 2) }}
-  </pre> -->
 </template>
 
 <script setup>
 import InputWrapper from '../../shared/InputWrapper.vue'
 import useExamsInfoHandler from '../../../composition/useExamInfoHandler'
 const { MAIN_INFO_FORM } = useExamsInfoHandler()
-// const disablesSec = () => {
-//   return [seconds=[0]]
-// }
 const {
   mainInfoForm,
   formValue,

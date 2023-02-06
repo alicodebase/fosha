@@ -6,8 +6,8 @@ import { useMessage } from 'naive-ui'
 
 //-- reactive values
 
-const activePanel = ref(['1'])
-const allowedPanels = ref(['1'])
+const activePanel = ref(['4'])
+const allowedPanels = ref(['4'])
 
 // -- 
 

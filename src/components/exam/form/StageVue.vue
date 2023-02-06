@@ -1,6 +1,6 @@
 <template>
   <div style="direction: rtl">
-    <div class="tw-container tw-my-2">
+    <div class="tw-my-2">
       <n-form ref="stage_form" :model="formValue" :rules="rules">
         <n-grid cols="1 400:2 600:2">
           <n-grid-item>

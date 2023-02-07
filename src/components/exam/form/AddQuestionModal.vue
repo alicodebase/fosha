@@ -2,11 +2,11 @@
   <n-card class="tw-max-w-[1000px] tw-my-2 !tw-bg-white" max-width="300px">
     <template #footer>
       <div class="tw-flex tw-gap-2 tw-justify-end">
-        <n-button @click="closeDialog" type="error" :disabled="modalLoading">
+        <n-button type="error" :disabled="modalLoading" @click="closeDialog">
           إلغاء
         </n-button>
-        <n-button color="#688065" type="primary" @click.prevent="saveDialog" :loading="modalLoading"
-          :disabled="modalLoading">
+        <n-button color="#688065" type="primary" :disabled="modalLoading" :loading="modalLoading"
+          @click.prevent="saveDialog">
           حفظ
         </n-button>
       </div>
@@ -110,7 +110,7 @@
                   answer.drag_id,
                   sentence_i,
                 )}].is_correct`" class="tw-flex-auto">
-                  <n-switch v-model:value="answer.is_correct" @update:value="
+                  <n-switch v-model:value="answer.is_correct" :disabled="modalLoading" @update:value="
                     handleCorrectAnswer(
                       {
                         sentence_i,
@@ -119,7 +119,7 @@
                       },
                       $event,
                     )
-                  " :disabled="modalLoading" />
+                  " />
                 </n-form-item>
                 <n-form-item v-if="
                   formValue.sentences[sentence_i].questions[question_i]
@@ -156,7 +156,7 @@ import draggable from 'vuedraggable'
 import { defineProps, computed, onMounted } from 'vue'
 import useExamInfoHandler from '../../../composition/useExamInfoHandler'
 import { Add, TrashOutline, MoveOutline, ChevronDown } from '@vicons/ionicons5'
-const props = defineProps(['question_i', 'sentence_i'])
+const props = defineProps({ question_i: { type: Number, required: true }, sentence_i: { type: Number, required: true } })
 
 const { ADD_QUEST_FORM } = useExamInfoHandler()
 const {

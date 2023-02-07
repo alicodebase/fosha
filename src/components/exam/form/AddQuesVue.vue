@@ -14,10 +14,18 @@
       </div>
       <div>
         <div v-for="(sentence, sentence_i) in formValue.sentences" :key="sentence_i"
-          class="tw-shadow-md tw-p-2 tw-rounded-md tw-m-1 tw-mb-3 tw-border-solid tw-border-transparent hover:tw-border-current">
+          class="tw-shadow-md tw-p-2 tw-rounded-md tw-m-1 tw-mb-3 tw-transition tw-border-solid tw-border-transparent hover:tw-border-current tw-border-2"
+          :class="{ 'tw-border-red-500': sentence.errors == true }">
           <div class="tw-flex tw-justify-between tw-items-center">
-            <n-avatar round color="#1D3134">
-              {{ sentence_i + 1 }}
+            <n-avatar round size="small" :color="sentence.errors ? '#f08a00' : '#1D3134'"
+              class=" tw-flex tw-items-center">
+              <template v-if="!sentence.errors">
+                {{ sentence_i + 1 }}
+              </template>
+              <template v-else>
+                <n-icon :component="InformationOutline" />
+              </template>
+
             </n-avatar>
             <n-button v-if="formValue.sentences.length > 1" circle type="error" class="tw-mx-3"
               @click="() => handleSentence(sentence_i, 'remove')">
@@ -40,34 +48,21 @@
           </InputWrapper>
 
           <InputWrapper label="وصف العبارة" :is-required="true" class="tw-pb-3">
-            <!-- <n-form-item
-              :show-label="false"
-              :path="`sentences[${sentence_i}].body`"
-              :rule="{
-                min: 5,
-                required: true,
-                message: 'برجاء ادخال وصف عبارة صالح',
-                trigger: ['input', 'blur'],
-              }"
-            >
-              <n-input
-                v-model:value="sentence.body"
-                type="textarea"
-                :autosize="{
-                  minRows: 3,
-                  maxRows: 5,
-                }"
-                clearable
-              />
-            </n-form-item> -->
             <ckeditor v-model="sentence.body" :editor="editor" :config="editorConfig"></ckeditor>
           </InputWrapper>
           <!-- //-- form  -->
 
           <!-- question wrapper  -->
-          <n-collapse display-directive="show" arrow-placement="right">
-            <n-skeleton v-if="questionChangingLoading" height="40px" round />
-            <n-collapse-item v-else :title="`عدد الاسئلة ${counter(sentence_i, 1)}`" name="1" class="!tw-m-0">
+          <n-collapse arrow-placement="right">
+            <template #arrow>
+              <n-icon-wrapper :size="24" :border-radius="5" color="#f08a00"
+                v-if="questionHasError(formValue.sentences[sentence_i].questions)">
+                <n-icon :size="18" :component="InformationOutline" />
+              </n-icon-wrapper>
+            </template>
+
+            <n-collapse-item v-if="!questionChangingLoading" :title="`عدد الاسئلة ${counter(sentence_i, 1)}`" name="1"
+              class="!tw-m-0">
               <n-collapse title="الاسئلة" class="!tw-m-0 quest-accorion" arrow-placement="right" accordion
                 :expanded-names="ques_dragging ? null : undefined">
                 <div class="tw-px-3">
@@ -87,14 +82,19 @@
                     @end="ques_dragging = false">
                     <template #item="{ element: question, index: question_i }">
                       <div
-                        class="tw-mx-1 tw-flex tw-flex-wrap tw-transition-all tw-rounded-md tw-p-2 tw-my-3 tw-cursor-pointer tw-shadow-md tw-border-r-2 hover:tw-shadow-lg hover:tw-mx-2 hover:tw-border-r-black"
-                        @click.stop="question.modal = true">
+                        class="tw-flex tw-flex-wrap tw-mx-1 tw-p-2 tw-my-3  tw-border-2 tw-border-solid tw-border-transparent tw-shadow-md tw-rounded-md tw-cursor-pointer tw-transition-all hover:tw-shadow-lg hover:tw-mx-2"
+                        @click.stop="question.modal = true" :class="{ '!tw-border-red-500': question.errors == true }">
                         <div class="tw-flex-1 tw-flex tw-items-center tw-justify-between tw-flex-wrap">
-                          <n-avatar size="small" round color="#1D3134">
-                            {{ question_i + 1 }}
+                          <n-avatar size="small" round :color="question.errors ? '#f08a00' : '#1D3134'">
+                            <template v-if="!question.errors">
+                              {{ question_i + 1 }}
+                            </template>
+                            <template v-else>
+                              <n-icon :component="InformationOutline" />
+                            </template>
                           </n-avatar>
                           <span class="tw-text-sm tw-m-auto tw-text-center tw-opacity-90">
-                            {{ question.body ?? 'عنوان السؤال' }}
+                            {{ question.body ?? 'اكتب عنوان السؤال' }}
                           </span>
                         </div>
                         <div class="tw-flex tw-gap-2">
@@ -126,6 +126,7 @@
                 </div>
               </n-collapse>
             </n-collapse-item>
+
           </n-collapse>
           <!-- question wrapper  -->
         </div>
@@ -152,6 +153,7 @@ import {
   TrashOutline,
   MoveOutline,
   PencilOutline,
+  InformationOutline
 } from '@vicons/ionicons5'
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
 
@@ -224,6 +226,12 @@ const draggableQuestProps = computed(() => {
     },
   }
 })
+
+const questionHasError = (questions) => {
+  const isError = questions.find((x) => x.errors === true)
+  if (isError) return true
+  else return false
+}
 
 //-- making requests
 

@@ -1,20 +1,15 @@
 // import axios from 'axios'
-import { ref, reactive } from 'vue'
+import { ref, reactive, h } from 'vue'
 import { getMaterial, getStages, getQuestions, getSentences, saveQuestion, putQuestion, saveSentence, putSentence } from '../services/apies'
 import { v4 as uuidv4 } from 'uuid';
-import { useMessage } from 'naive-ui'
+import { useMessage, NInput } from 'naive-ui'
+
 
 //-- reactive values
 
-const activePanel = ref(['1'])
-const allowedPanels = ref(['1'])
+const activePanel = ref(['4'])
+const allowedPanels = ref(['4'])
 
-// -- 
-/**
- * زرار التأكيد
- * default -- piedegree 
- * 
- */
 // -- client payload
 
 const payload = reactive({
@@ -468,7 +463,8 @@ export default function () {
     //-- state
     const questionsList = reactive({
       loading: true,
-      data: []
+      data: [],
+      filterData: []
     })
 
     const sentencesList = reactive({
@@ -658,12 +654,16 @@ export default function () {
       let invalid = false
 
       payload.addQuest.sentences.forEach((item) => {
+        item['errors'] = false
         if (item.body === null || item.body.split('').length <= 2) {
+          item['errors'] = true
           invalid = true
           return
         }
         item.questions.forEach((question) => {
+          question['errors'] = false
           if (question.body === null || question.degreee === null || question.body.split('').length <= 1) {
+            question['errors'] = true
             invalid = true
             return
           }
@@ -683,14 +683,34 @@ export default function () {
         const [res] = result
         if (res.status === 'fulfilled') {
           const { data } = res.value
-          questionsList.data = data.data.map((item) => {
-            return {
-              label: item.question,
-              key: item.id,
-              disabled: false,
-              body: item
-            }
-          })
+          questionsList.data =
+            [{
+              key: 'header',
+              type: 'render',
+              render: renderCustomHeader
+            },
+            ...data.data.map((item) => {
+              return {
+                label: item.question,
+                key: item.id,
+                disabled: false,
+                body: item
+              }
+            })]
+          questionsList.filterData =
+            [{
+              key: 'header',
+              type: 'render',
+              render: renderCustomHeader
+            },
+            ...data.data.map((item) => {
+              return {
+                label: item.question,
+                key: item.id,
+                disabled: false,
+                body: item
+              }
+            })]
           questionsList.loading = false
         }
       }
@@ -801,15 +821,16 @@ export default function () {
       question.value.answers.forEach((item) => {
         if (item.body == null || item.body.split('').length <= 2) {
           notify('error', 'please fill all required fields')
+          console.log(item)
           return
         } else {
           invalid = false
+          return
         }
       })
-      if (invalid) {
-        notify('error', 'please fill all required fields')
-        return
-      }
+
+      if (invalid) return
+
       if (question.value.id == null) {
         handleCreateQuestion(question, sentence_i, question_i)
         return
@@ -908,6 +929,35 @@ export default function () {
       }
     }
     //-------------
+    //-- dropdown 
+    const renderCustomHeader = () => {
+      return h(
+        'div',
+        {
+          style: 'display: flex; align-items: center; padding: 8px 12px;'
+        },
+        [
+          h(NInput, {
+            size: 'small',
+            onKeyup: triggerSearch
+          }),
+
+        ]
+      )
+    }
+    const triggerSearch = ({ target }) => {
+      questionsList.data = [{
+        key: 'header',
+        type: 'render',
+        render: renderCustomHeader
+      }, ...questionsList.filterData.filter((x) => {
+        if (x.type === 'render') return
+        if (x.label.toLocaleLowerCase().includes(target.value.toLocaleLowerCase())) return x
+        if (!target.value) return x
+
+      })]
+
+    }
 
     return {
       addSentence_form,

@@ -49,6 +49,7 @@
     "@vueup/vue-quill": "^1.1.0",
     "dedent": "^0.7.0",
     "highlight.js": "^11.7.0",
+    "quill-image-resize-vue": "^1.0.4",
     "quill-image-uploader": "^1.2.4",
     "uuid": "^9.0.0",
     "vite-plugin-eslint": "^1.8.1",

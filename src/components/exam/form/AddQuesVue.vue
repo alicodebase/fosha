@@ -47,8 +47,8 @@
           </InputWrapper>
 
           <InputWrapper label="وصف العبارة" :is-required="true" class="tw-pb-3">
-            <div class="" style="direction: ltr">
-              <QuillEditor ref="myEditor" :options="editorOption" contentType="html" v-model:content="sentence.body" />
+            <div style="direction: ltr">
+              <QuillEditor ref="myEditor" v-model:content="sentence.body" :options="editorOption" contentType="html" />
             </div>
           </InputWrapper>
           <!-- //-- form  -->
@@ -229,6 +229,28 @@ export default {
           [{ align: [] }],
           ['link', 'image'],
         ],
+        imageResize: {
+          modules: ['Resize', 'DisplaySize', 'Toolbar'],
+          handleStyles: {
+            backgroundColor: '#1D3134',
+            border: 'none',
+            color: '#1D3134'
+          },
+          toolbarStyles: {
+            backgroundColor: '#1D3134',
+            border: 'none',
+            color: '#1D3134'
+            // other camelCase styles for size display
+          },
+          toolbarButtonStyles: {
+            // ...
+          },
+          toolbarButtonSvgStyles: {
+            // ...
+          },
+        },
+
+
       },
     }
 

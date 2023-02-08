@@ -997,19 +997,19 @@ export default function () {
   const HandleSubmit = () => {
     if (!submit.value) return
     const { stage, addQuest, pedigree, mainInfo } = payload
-    const questionArray = () => {
-      let questArr = []
-      addQuest.sentences.forEach((item) => {
-        return item.questions.forEach((x, i) => {
-          questArr.push({
-            "question_id": x.id,
-            "question_mark": x.degreee,
-            "order": i + 1
-          })
-        })
-      })
-      return questArr
-    }
+    // const questionArray = () => {
+    //   let questArr = []
+    //   addQuest.sentences.forEach((item) => {
+    //     return item.questions.forEach((x, i) => {
+    //       questArr.push({
+    //         "question_id": x.id,
+    //         "question_mark": x.degreee,
+    //         "order": i + 1
+    //       })
+    //     })
+    //   })
+    //   return questArr
+    // }
 
     const type = () => {
       if (mainInfo.category == 'quiz' || mainInfo.category == 'quiz-p') {
@@ -1041,7 +1041,7 @@ export default function () {
       "sentences": addQuest.sentences.map((x) => {
         return x.req_id ? x.req_id : x.category
       }),
-      "questions": questionArray(),
+      // "questions": questionArray(),
       "grade_d": {
         "from": pedigree.grade_d.from,
         "to": pedigree.grade_d.to

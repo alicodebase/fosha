@@ -18,14 +18,13 @@
           :class="{ 'tw-border-red-500': sentence.errors == true }">
           <div class="tw-flex tw-justify-between tw-items-center">
             <n-avatar round size="small" :color="sentence.errors ? '#f08a00' : '#1D3134'"
-              class=" tw-flex tw-items-center">
+              class="tw-flex tw-items-center">
               <template v-if="!sentence.errors">
                 {{ sentence_i + 1 }}
               </template>
               <template v-else>
                 <n-icon :component="InformationOutline" />
               </template>
-
             </n-avatar>
             <n-button v-if="formValue.sentences.length > 1" circle type="error" class="tw-mx-3"
               @click="() => handleSentence(sentence_i, 'remove')">
@@ -48,15 +47,18 @@
           </InputWrapper>
 
           <InputWrapper label="وصف العبارة" :is-required="true" class="tw-pb-3">
-            <ckeditor v-model="sentence.body" :editor="editor" :config="editorConfig"></ckeditor>
+            <div class="" style="direction: ltr">
+              <QuillEditor ref="myEditor" :options="editorOption" contentType="html" v-model:content="sentence.body" />
+            </div>
           </InputWrapper>
           <!-- //-- form  -->
 
           <!-- question wrapper  -->
           <n-collapse arrow-placement="right">
             <template #arrow>
-              <n-icon-wrapper :size="24" :border-radius="5" color="#f08a00"
-                v-if="questionHasError(formValue.sentences[sentence_i].questions)">
+              <n-icon-wrapper :size="24" :border-radius="5" color="#f08a00" v-if="
+                questionHasError(formValue.sentences[sentence_i].questions)
+              ">
                 <n-icon :size="18" :component="InformationOutline" />
               </n-icon-wrapper>
             </template>
@@ -82,8 +84,10 @@
                     @end="ques_dragging = false">
                     <template #item="{ element: question, index: question_i }">
                       <div
-                        class="tw-flex tw-flex-wrap tw-mx-1 tw-p-2 tw-my-3  tw-border-2 tw-border-solid tw-border-transparent tw-shadow-md tw-rounded-md tw-cursor-pointer tw-transition-all hover:tw-shadow-lg hover:tw-mx-2"
-                        @click.stop="question.modal = true" :class="{ '!tw-border-red-500': question.errors == true }">
+                        class="tw-flex tw-flex-wrap tw-mx-1 tw-p-2 tw-my-3 tw-border-2 tw-border-solid tw-border-transparent tw-shadow-md tw-rounded-md tw-cursor-pointer tw-transition-all hover:tw-shadow-lg hover:tw-mx-2"
+                        @click.stop="question.modal = true" :class="{
+                          '!tw-border-red-500': question.errors == true,
+                        }">
                         <div class="tw-flex-1 tw-flex tw-items-center tw-justify-between tw-flex-wrap">
                           <n-avatar size="small" round :color="question.errors ? '#f08a00' : '#1D3134'">
                             <template v-if="!question.errors">
@@ -126,12 +130,11 @@
                 </div>
               </n-collapse>
             </n-collapse-item>
-
           </n-collapse>
           <!-- question wrapper  -->
         </div>
       </div>
-      <n-form-item style="direction:ltr" class=" tw-flex tw-items-center tw-justify-start" v-if="!submit">
+      <n-form-item style="direction: ltr" class="tw-flex tw-items-center tw-justify-start">
         <n-button color="#688065" round type="primary" style="margin-inline-start: auto" @click.prevent="handleValidate"
           :loading="saveSentenceLoading" :disabled="saveSentenceLoading">
           حفظ
@@ -142,103 +145,149 @@
   </div>
 </template>
 
-<script setup>
+<script>
 import { computed, onMounted } from 'vue'
 import draggable from 'vuedraggable'
 import AddQuestionModal from './AddQuestionModal.vue'
 import useExamInfoHandler from '../../../composition/useExamInfoHandler'
 import InputWrapper from '../../shared/InputWrapper.vue'
+
+
+import ImageUploader from 'quill-image-uploader'
+
+
 import {
   Add,
   TrashOutline,
   MoveOutline,
   PencilOutline,
-  InformationOutline
+  InformationOutline,
 } from '@vicons/ionicons5'
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic'
 
-
-const editor = ClassicEditor
-const editorConfig = {
-  highlight: {
-    options: [
-      {
-        model: 'greenMarker',
-        class: 'marker-green',
-        title: 'Green marker',
-        color: 'var(--ck-highlight-marker-green)',
-        type: 'marker',
-      },
-      {
-        model: 'redPen',
-        class: 'pen-red',
-        title: 'Red pen',
-        color: 'var(--ck-highlight-pen-red)',
-        type: 'pen',
-      },
-    ],
+export default {
+  components: {
+    draggable,
+    AddQuestionModal,
+    InputWrapper,
   },
-  toolbar: {
-    items: [
-      'heading',
-      '|',
-      'bold',
-      'italic',
-      'link',
-      'undo',
-      'redo',
-      'numberedList',
-      'blockQuote',
-    ],
+  setup() {
+    const { ADD_QUEST_FORM } = useExamInfoHandler()
+    const {
+      addSentence_form,
+      formValue,
+      handleSentence,
+      counter,
+      handleQuestion,
+      ques_dragging,
+      answer_dragging,
+      handleFetching,
+      sentencesList,
+      handleSent_ques,
+      questionChangingLoading,
+      handleValidate,
+      saveSentenceLoading,
+      myEditor
+    } = ADD_QUEST_FORM()
+
+    const draggableQuestProps = computed(() => {
+      return {
+        handle: '.handle-quest',
+        class: 'list-group tw-list-none tw-p-0',
+        animation: 200,
+        group: 'description',
+        ghostClass: 'ghost',
+        'component-data': {
+          tag: 'ul',
+          type: 'transition-group',
+          key: 'drag_id',
+          name: 'flip-list',
+        },
+      }
+    })
+
+    const questionHasError = (questions) => {
+      const isError = questions.find((x) => x.errors === true)
+      if (isError) return true
+      else return false
+    }
+
+    const editorOption = {
+      modules: {
+        toolbar: [
+          ['bold', 'italic', 'underline', 'strike'],
+          ['blockquote'],
+          // ['blockquote', 'code-block'],
+          [{ header: 1 }, { header: 2 }],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          // [{ script: 'sub' }, { script: 'super' }],
+          [{ indent: '-1' }, { indent: '+1' }],
+          [{ direction: 'rtl' }],
+          // [{ size: ['small', false, 'large', 'huge'] }],
+          // [{ header: [1, 2, 3, 4, 5, 6, false] }],
+          [{ font: [] }],
+          [{ color: [] }, { background: [] }],
+          [{ align: [] }],
+          ['link', 'image'],
+        ],
+      },
+    }
+
+    const modules = {
+      name: 'imageUploader',
+      module: ImageUploader,
+      options: {
+        upload: (file) => {
+          return new Promise((resolve) => {
+            const formData = new FormData()
+            formData.append('image', file)
+            resolve(formData)
+            // axios
+            //   .post('/upload-image', formData)
+            //   .then((res) => {
+            //     console.log(res)
+            //     resolve(res.data.url)
+            //   })
+            //   .catch((err) => {
+            //     reject('Upload failed')
+            //     console.error('Error:', err)
+            //   })
+          })
+        },
+      },
+    }
+
+
+    onMounted(async () => {
+      const { fetchSentences } = handleFetching()
+      await fetchSentences()
+    })
+    return {
+      addSentence_form,
+      formValue,
+      handleSentence,
+      counter,
+      handleQuestion,
+      ques_dragging,
+      answer_dragging,
+      sentencesList,
+      handleSent_ques,
+      questionChangingLoading,
+      handleValidate,
+      saveSentenceLoading,
+      draggableQuestProps,
+      editorOption,
+      questionHasError,
+      modules,
+      myEditor,
+      // icons
+      Add,
+      TrashOutline,
+      MoveOutline,
+      PencilOutline,
+      InformationOutline,
+    }
   },
-  language: 'ar',
 }
-const { ADD_QUEST_FORM } = useExamInfoHandler()
-const {
-  addSentence_form,
-  formValue,
-  handleSentence,
-  counter,
-  handleQuestion,
-  ques_dragging,
-  answer_dragging,
-  handleFetching,
-  sentencesList,
-  handleSent_ques,
-  questionChangingLoading,
-  handleValidate,
-  saveSentenceLoading,
-  submit
-} = ADD_QUEST_FORM()
-
-const draggableQuestProps = computed(() => {
-  return {
-    handle: '.handle-quest',
-    class: 'list-group tw-list-none tw-p-0',
-    animation: 200,
-    group: 'description',
-    ghostClass: 'ghost',
-    'component-data': {
-      tag: 'ul',
-      type: 'transition-group',
-      key: 'drag_id',
-      name: 'flip-list',
-    },
-  }
-})
-
-const questionHasError = (questions) => {
-  const isError = questions.find((x) => x.errors === true)
-  if (isError) return true
-  else return false
-}
-
-//-- making requests
-
-onMounted(async () => {
-  const { fetchSentences } = handleFetching()
-  await fetchSentences()
-})
 </script>
 
 <style lang="scss">

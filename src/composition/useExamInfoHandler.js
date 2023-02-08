@@ -1,9 +1,9 @@
 // import axios from 'axios'
-import { ref, reactive, h } from 'vue'
+import { ref, reactive, h, nextTick } from 'vue'
 import { getMaterial, getStages, getQuestions, getSentences, saveQuestion, putQuestion, saveSentence, putSentence } from '../services/apies'
 import { v4 as uuidv4 } from 'uuid';
 import { useMessage, NInput } from 'naive-ui'
-
+import dedent from 'dedent'
 
 //-- reactive values
 
@@ -460,6 +460,7 @@ export default function () {
     const questionChangingLoading = ref(false)
     const modalLoading = ref(false)
     const saveSentenceLoading = ref(false)
+    const myEditor = ref(null)
     //-- state
     const questionsList = reactive({
       loading: true,
@@ -507,7 +508,7 @@ export default function () {
         formValue.sentences.splice(index, 1)
       }
     }
-    const handleSent_ques = (value, sentence_i) => {
+    const handleSent_ques = async (value, sentence_i) => {
       questionChangingLoading.value = true
       if ([typeof value, typeof sentence_i].includes('undefined')) return
 
@@ -522,8 +523,9 @@ export default function () {
         questionChangingLoading.value = false
         return
       }
-
+      submit.value = false
       selectedSentence.body = sentence
+      await nextTick()
       selectedSentence.questions = questions.map((item) => {
         return {
           drag_id: uuidv4(),
@@ -559,19 +561,20 @@ export default function () {
       const selectedStoredQuestion = questionsList.data.find((x) => x.key === value)
       const { question, stage_id, id, choices } = selectedStoredQuestion.body
 
-
+      //-- here!
 
       selectedQuestion.body = question
+
       selectedQuestion.stage_id = stage_id
       selectedQuestion.id = id
       // -- handle question id realted to choices
-
+      submit.value = false
       if (choices.length) {
 
         selectedQuestion.answers = choices.map((x) => {
           return {
             drag_id: uuidv4(),
-            body: x.name,
+            body: dedent`${x.name}`,
             is_correct: x.is_correct == 1 ? true : false,
           }
         })
@@ -655,7 +658,7 @@ export default function () {
 
       payload.addQuest.sentences.forEach((item) => {
         item['errors'] = false
-        if (item.body === null || item.body.split('').length <= 2) {
+        if (item.body === null || item.body.split('').length <= 2 || item.body == '<p><br></p>') {
           item['errors'] = true
           invalid = true
           return
@@ -866,6 +869,7 @@ export default function () {
         payload.addQuest.sentences[sentence_i].questions[question_i].id = data.id
         modalLoading.value = false
         question.value.modal = false
+        question.value.errors = false
       } catch (error) {
         modalLoading.value = false
         notify('error', error)
@@ -894,6 +898,8 @@ export default function () {
         modalLoading.value = false
         if (!data) return
         question.value.modal = false
+        question.value.errors = false
+
       } catch (error) {
         modalLoading.value = false
         notify('error', error)
@@ -980,7 +986,8 @@ export default function () {
       handleDialog,
       modalLoading,
       saveSentenceLoading,
-      submit
+      submit,
+      myEditor
     }
   }
 
@@ -1083,6 +1090,11 @@ export default function () {
     }
   }
 
+  // const sentenceBodyConverter = (payload) => {
+  //   return dedent`
+  //   ${payload}
+  //   `
+  // }
 
 
   return {

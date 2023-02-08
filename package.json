@@ -41,11 +41,18 @@
     "vue-loader": "^17.0.1"
   },
   "dependencies": {
-    "@ckeditor/ckeditor5-build-classic": "^36.0.0",
+    "@ckeditor/ckeditor5-build-classic": "^36.0.1",
     "@ckeditor/ckeditor5-highlight": "^36.0.0",
+    "@ckeditor/ckeditor5-image": "^36.0.1",
+    "@ckeditor/ckeditor5-upload": "^36.0.1",
     "@ckeditor/ckeditor5-vue": "^4.0.1",
+    "@vueup/vue-quill": "^1.1.0",
+    "dedent": "^0.7.0",
+    "highlight.js": "^11.7.0",
+    "quill-image-uploader": "^1.2.4",
     "uuid": "^9.0.0",
     "vite-plugin-eslint": "^1.8.1",
+    "vue-quill-editor": "^3.0.6",
     "vue3-draggable": "^2.0.9",
     "vuedraggable": "^4.1.0"
   }
